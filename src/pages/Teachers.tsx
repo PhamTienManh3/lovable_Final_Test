@@ -2,17 +2,21 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Plus, RefreshCw, Search } from "lucide-react";
 import { TeachersTable } from "@/components/teachers/TeachersTable";
+import { CreateTeacherSheet } from "@/components/teachers/CreateTeacherSheet";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
 
 const Teachers = () => {
-  const navigate = useNavigate();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
 
-  const { data: teachersData, isLoading } = useQuery({
-    queryKey: ["teachers", page],
+  const { data: teachersData, isLoading, refetch } = useQuery({
+    queryKey: ["teachers", page, pageSize],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -33,20 +37,33 @@ const Teachers = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Danh sách giáo viên
-            </h1>
-            <p className="text-muted-foreground">
-              Quản lý thông tin giáo viên trong hệ thống
-            </p>
+    <AppLayout
+      breadcrumb={
+        <Breadcrumb
+          items={[
+            { label: "Giáo viên" },
+          ]}
+        />
+      }
+    >
+      <div className="bg-card rounded-lg border p-6">
+        <div className="flex justify-end items-center gap-2 mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm thông tin..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 w-64 h-9"
+            />
           </div>
-          <Button onClick={() => navigate("/teachers/create")} size="lg">
-            <Plus className="mr-2 h-5 w-5" />
-            Tạo giáo viên mới
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-1.5" />
+            Tải lại
+          </Button>
+          <Button onClick={() => setIsSheetOpen(true)} size="sm">
+            <Plus className="h-4 w-4 mr-1.5" />
+            Tạo mới
           </Button>
         </div>
 
@@ -55,10 +72,25 @@ const Teachers = () => {
           isLoading={isLoading}
           currentPage={page}
           totalPages={totalPages}
+          totalCount={teachersData?.count || 0}
+          pageSize={pageSize}
           onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
         />
       </div>
-    </div>
+
+      <CreateTeacherSheet
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        onSuccess={() => {
+          refetch();
+          setIsSheetOpen(false);
+        }}
+      />
+    </AppLayout>
   );
 };
 
