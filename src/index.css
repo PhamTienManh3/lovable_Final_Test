@@ -2,13 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 220 20% 97%;
+    --background: 0 0% 96%;
     --foreground: 220 15% 15%;
 
     --card: 0 0% 100%;
@@ -17,7 +13,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 15%;
 
-    --primary: 217 91% 60%;
+    --primary: 262 52% 47%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -26,7 +22,7 @@ All colors MUST be HSL.
     --muted: 220 14% 96%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 142 76% 36%;
+    --accent: 262 52% 47%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
@@ -37,18 +33,18 @@ All colors MUST be HSL.
 
     --border: 220 13% 88%;
     --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --ring: 262 52% 47%;
 
-    --radius: 0.5rem;
+    --radius: 0.375rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 35%;
+    --sidebar-primary: 262 52% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 262 52% 96%;
+    --sidebar-accent-foreground: 262 52% 47%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 262 52% 47%;
   }
 
   .dark {
@@ -61,7 +57,7 @@ All colors MUST be HSL.
     --popover: 222 47% 14%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 262 52% 55%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 17%;
@@ -70,7 +66,7 @@ All colors MUST be HSL.
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 142 76% 36%;
+    --accent: 262 52% 55%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
@@ -81,16 +77,16 @@ All colors MUST be HSL.
 
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --ring: 262 52% 55%;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224 76% 48%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 262 52% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 16%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 262 30% 20%;
+    --sidebar-accent-foreground: 262 52% 70%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 262 52% 55%;
   }
 }
 
@@ -101,5 +97,19 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .status-badge {
+    @apply px-2 py-0.5 text-xs font-medium rounded;
+  }
+  
+  .status-badge-active {
+    @apply bg-success text-success-foreground;
+  }
+  
+  .status-badge-inactive {
+    @apply bg-muted text-muted-foreground;
   }
 }
