@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, X, FolderOpen } from "lucide-react";
+import { Save, Upload, X, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,6 +27,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface AcademicDegree {
+  id: string;
+  level: string;
+  school: string;
+  major: string;
+  status: "completed" | "in_progress";
+  graduationYear: string;
+}
+
+const ACADEMIC_LEVELS = [
+  "Trung học",
+  "Cao đẳng", 
+  "Cử nhân",
+  "Kỹ sư",
+  "Thạc sĩ",
+  "Tiến sĩ",
+  "Hậu Tiến sĩ",
+  "Giáo sư",
+];
 
 interface CreateTeacherSheetProps {
   open: boolean;
@@ -42,6 +63,7 @@ export const CreateTeacherSheet = ({
   const { toast } = useToast();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [academicDegrees, setAcademicDegrees] = useState<AcademicDegree[]>([]);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -79,6 +101,32 @@ export const CreateTeacherSheet = ({
     }
   };
 
+  const addAcademicDegree = () => {
+    setAcademicDegrees([
+      ...academicDegrees,
+      {
+        id: crypto.randomUUID(),
+        level: "",
+        school: "",
+        major: "",
+        status: "completed",
+        graduationYear: "",
+      },
+    ]);
+  };
+
+  const updateAcademicDegree = (id: string, field: keyof AcademicDegree, value: string) => {
+    setAcademicDegrees(
+      academicDegrees.map((deg) =>
+        deg.id === id ? { ...deg, [field]: value } : deg
+      )
+    );
+  };
+
+  const removeAcademicDegree = (id: string) => {
+    setAcademicDegrees(academicDegrees.filter((deg) => deg.id !== id));
+  };
+
   const createMutation = useMutation({
     mutationFn: async () => {
       let avatarUrl = null;
@@ -99,8 +147,14 @@ export const CreateTeacherSheet = ({
         avatarUrl = urlData.publicUrl;
       }
 
+      // Store the highest academic degree in the academic_degree field
+      const highestDegree = academicDegrees.length > 0 
+        ? academicDegrees[academicDegrees.length - 1].level 
+        : formData.academic_degree;
+
       const { error } = await supabase.from("teachers").insert({
         ...formData,
+        academic_degree: highestDegree,
         avatar_url: avatarUrl,
       });
 
@@ -137,6 +191,7 @@ export const CreateTeacherSheet = ({
     });
     setAvatarFile(null);
     setAvatarPreview("");
+    setAcademicDegrees([]);
   };
 
   return (
@@ -324,7 +379,13 @@ export const CreateTeacherSheet = ({
             </legend>
 
             <div className="flex justify-end mb-3">
-              <Button variant="outline" size="sm" className="text-xs">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-xs"
+                onClick={addAcademicDegree}
+                type="button"
+              >
                 Thêm
               </Button>
             </div>
@@ -333,22 +394,90 @@ export const CreateTeacherSheet = ({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
-                    <TableHead className="text-xs font-medium">Bậc</TableHead>
+                    <TableHead className="text-xs font-medium w-[140px]">Bậc</TableHead>
                     <TableHead className="text-xs font-medium">Trường</TableHead>
                     <TableHead className="text-xs font-medium">Chuyên ngành</TableHead>
-                    <TableHead className="text-xs font-medium">Trạng thái</TableHead>
-                    <TableHead className="text-xs font-medium">Tốt nghiệp</TableHead>
+                    <TableHead className="text-xs font-medium w-[100px]">Trạng thái</TableHead>
+                    <TableHead className="text-xs font-medium w-[110px]">Tốt nghiệp</TableHead>
+                    <TableHead className="text-xs font-medium w-[40px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <div className="flex flex-col items-center text-muted-foreground">
-                        <FolderOpen className="h-10 w-10 mb-2 opacity-50" />
-                        <span className="text-sm">Trống</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  {academicDegrees.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground text-sm">
+                        Chưa có học vị nào. Nhấn "Thêm" để bổ sung.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    academicDegrees.map((degree) => (
+                      <TableRow key={degree.id}>
+                        <TableCell className="p-1.5">
+                          <Select
+                            value={degree.level}
+                            onValueChange={(value) => updateAcademicDegree(degree.id, "level", value)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Chọn học vị" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ACADEMIC_LEVELS.map((level) => (
+                                <SelectItem key={level} value={level} className="text-xs">
+                                  {level}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Input
+                            placeholder="Trường theo học"
+                            value={degree.school}
+                            onChange={(e) => updateAcademicDegree(degree.id, "school", e.target.value)}
+                            className="h-8 text-xs"
+                          />
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Input
+                            placeholder="Chuyên ngành"
+                            value={degree.major}
+                            onChange={(e) => updateAcademicDegree(degree.id, "major", e.target.value)}
+                            className="h-8 text-xs"
+                          />
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <Checkbox
+                              checked={degree.status === "completed"}
+                              onCheckedChange={(checked) =>
+                                updateAcademicDegree(degree.id, "status", checked ? "completed" : "in_progress")
+                              }
+                            />
+                            <span className="text-xs">Hoàn thành</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Input
+                            placeholder="Năm/Dự kiến"
+                            value={degree.graduationYear}
+                            onChange={(e) => updateAcademicDegree(degree.id, "graduationYear", e.target.value)}
+                            className="h-8 text-xs"
+                          />
+                        </TableCell>
+                        <TableCell className="p-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAcademicDegree(degree.id)}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                            type="button"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
