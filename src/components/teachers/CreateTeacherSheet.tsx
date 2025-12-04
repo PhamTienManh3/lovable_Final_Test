@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, X, Trash2 } from "lucide-react";
+import { Save, Upload, X, Trash2, Check } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -64,6 +64,7 @@ export const CreateTeacherSheet = ({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [academicDegrees, setAcademicDegrees] = useState<AcademicDegree[]>([]);
+  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -72,7 +73,6 @@ export const CreateTeacherSheet = ({
     email: "",
     id_number: "",
     address: "",
-    work_position_id: "",
     academic_degree: "",
     status: "active",
   });
@@ -99,6 +99,14 @@ export const CreateTeacherSheet = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const togglePosition = (positionId: string) => {
+    setSelectedPositions((prev) =>
+      prev.includes(positionId)
+        ? prev.filter((id) => id !== positionId)
+        : [...prev, positionId]
+    );
   };
 
   const addAcademicDegree = () => {
@@ -152,13 +160,29 @@ export const CreateTeacherSheet = ({
         ? academicDegrees[academicDegrees.length - 1].level 
         : formData.academic_degree;
 
-      const { error } = await supabase.from("teachers").insert({
+      // Insert teacher with first selected position as primary
+      const { data: teacher, error } = await supabase.from("teachers").insert({
         ...formData,
+        work_position_id: selectedPositions[0] || null,
         academic_degree: highestDegree,
         avatar_url: avatarUrl,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Insert all selected work positions into junction table
+      if (selectedPositions.length > 0 && teacher) {
+        const positionsToInsert = selectedPositions.map((posId) => ({
+          teacher_id: teacher.id,
+          work_position_id: posId,
+        }));
+
+        const { error: posError } = await supabase
+          .from("teacher_work_positions")
+          .insert(positionsToInsert);
+
+        if (posError) throw posError;
+      }
     },
     onSuccess: () => {
       toast({
@@ -185,13 +209,22 @@ export const CreateTeacherSheet = ({
       email: "",
       id_number: "",
       address: "",
-      work_position_id: "",
       academic_degree: "",
       status: "active",
     });
     setAvatarFile(null);
     setAvatarPreview("");
     setAcademicDegrees([]);
+    setSelectedPositions([]);
+  };
+
+  const getSelectedPositionsLabel = () => {
+    if (selectedPositions.length === 0) return "Chọn các vị trí công tác";
+    const selectedNames = positions
+      ?.filter((p) => selectedPositions.includes(p.id))
+      .map((p) => `${p.code} - ${p.name}`)
+      .join(", ");
+    return selectedNames || "Chọn các vị trí công tác";
   };
 
   return (
@@ -351,20 +384,30 @@ export const CreateTeacherSheet = ({
               <Label className="text-xs">
                 <span className="text-destructive">*</span> Vị trí công tác
               </Label>
-              <Select
-                value={formData.work_position_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, work_position_id: value })
-                }
-              >
+              <Select>
                 <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Chọn các vị trí công tác" />
+                  <SelectValue placeholder={getSelectedPositionsLabel()}>
+                    {getSelectedPositionsLabel()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {positions?.map((position) => (
-                    <SelectItem key={position.id} value={position.id}>
-                      {position.code} - {position.name}
-                    </SelectItem>
+                    <div
+                      key={position.id}
+                      className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground rounded-sm ${
+                        selectedPositions.includes(position.id)
+                          ? "bg-primary text-primary-foreground"
+                          : ""
+                      }`}
+                      onClick={() => togglePosition(position.id)}
+                    >
+                      {selectedPositions.includes(position.id) && (
+                        <Check className="h-4 w-4" />
+                      )}
+                      <span className={!selectedPositions.includes(position.id) ? "ml-6" : ""}>
+                        {position.code} - {position.name}
+                      </span>
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
@@ -488,10 +531,10 @@ export const CreateTeacherSheet = ({
         <div className="sticky bottom-0 bg-card border-t p-4 flex justify-end">
           <Button
             onClick={() => createMutation.mutate()}
-            disabled={!formData.full_name || createMutation.isPending}
-            size="sm"
+            disabled={createMutation.isPending}
+            className="gap-1.5"
           >
-            <Save className="h-4 w-4 mr-1.5" />
+            <Save className="h-4 w-4" />
             {createMutation.isPending ? "Đang lưu..." : "Lưu"}
           </Button>
         </div>

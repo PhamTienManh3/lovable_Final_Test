@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      teacher_work_positions: {
+        Row: {
+          created_at: string
+          id: string
+          teacher_id: string
+          work_position_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          teacher_id: string
+          work_position_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          teacher_id?: string
+          work_position_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_work_positions_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_work_positions_work_position_id_fkey"
+            columns: ["work_position_id"]
+            isOneToOne: false
+            referencedRelation: "work_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           academic_degree: string | null
