@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EditPositionSheet } from "./EditPositionSheet";
 
 interface WorkPosition {
   id: string;
@@ -21,12 +23,16 @@ interface WorkPosition {
 interface WorkPositionsTableProps {
   positions: WorkPosition[];
   isLoading: boolean;
+  onRefresh: () => void;
 }
 
 export const WorkPositionsTable = ({
   positions,
   isLoading,
+  onRefresh,
 }: WorkPositionsTableProps) => {
+  const [editingPosition, setEditingPosition] = useState<WorkPosition | null>(null);
+
   if (isLoading) {
     return (
       <div className="bg-card rounded-lg border">
@@ -40,56 +46,71 @@ export const WorkPositionsTable = ({
   }
 
   return (
-    <div className="bg-card rounded-lg border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/30 hover:bg-muted/30">
-            <TableHead className="w-16 font-semibold text-foreground">STT</TableHead>
-            <TableHead className="w-24 font-semibold text-foreground">Mã</TableHead>
-            <TableHead className="font-semibold text-foreground">Tên</TableHead>
-            <TableHead className="w-32 font-semibold text-foreground">Trạng thái</TableHead>
-            <TableHead className="font-semibold text-foreground">Mô tả</TableHead>
-            <TableHead className="w-16"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {positions.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                Chưa có vị trí công tác nào
-              </TableCell>
+    <>
+      <div className="bg-card rounded-lg border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-16 font-semibold text-foreground">STT</TableHead>
+              <TableHead className="w-24 font-semibold text-foreground">Mã</TableHead>
+              <TableHead className="font-semibold text-foreground">Tên</TableHead>
+              <TableHead className="w-32 font-semibold text-foreground">Trạng thái</TableHead>
+              <TableHead className="font-semibold text-foreground">Mô tả</TableHead>
+              <TableHead className="w-16"></TableHead>
             </TableRow>
-          ) : (
-            positions.map((position, index) => (
-              <TableRow key={position.id} className="hover:bg-muted/20">
-                <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                <TableCell className="font-medium">{position.code}</TableCell>
-                <TableCell>{position.name}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="default"
-                    className={
-                      position.status === "active"
-                        ? "bg-success hover:bg-success text-success-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }
-                  >
-                    {position.status === "active" ? "Hoạt động" : "Ngừng"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {position.description || "—"}
-                </TableCell>
-                <TableCell>
-                  <button className="p-1.5 hover:bg-muted rounded transition-colors">
-                    <Settings className="h-4 w-4 text-muted-foreground" />
-                  </button>
+          </TableHeader>
+          <TableBody>
+            {positions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  Chưa có vị trí công tác nào
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              positions.map((position, index) => (
+                <TableRow key={position.id} className="hover:bg-muted/20">
+                  <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                  <TableCell className="font-medium">{position.code}</TableCell>
+                  <TableCell>{position.name}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="default"
+                      className={
+                        position.status === "active"
+                          ? "bg-success hover:bg-success text-success-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }
+                    >
+                      {position.status === "active" ? "Hoạt động" : "Ngừng"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {position.description || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => setEditingPosition(position)}
+                      className="p-1.5 hover:bg-muted rounded transition-colors"
+                    >
+                      <Settings className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <EditPositionSheet
+        open={!!editingPosition}
+        onOpenChange={(open) => !open && setEditingPosition(null)}
+        position={editingPosition}
+        onSuccess={() => {
+          setEditingPosition(null);
+          onRefresh();
+        }}
+      />
+    </>
   );
 };
