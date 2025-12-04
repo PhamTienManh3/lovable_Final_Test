@@ -47,7 +47,7 @@ const WorkPositions = () => {
           </Button>
         </div>
 
-        <WorkPositionsTable positions={positions || []} isLoading={isLoading} />
+        <WorkPositionsTable positions={positions || []} isLoading={isLoading} onRefresh={refetch} />
       </div>
 
       <CreatePositionSheet
