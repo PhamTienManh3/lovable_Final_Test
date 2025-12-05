@@ -28,10 +28,11 @@ interface Teacher {
   avatar_url: string | null;
   academic_degree: string | null;
   work_positions: { name: string } | null;
+  work_position_id: string | null;
   address: string | null;
   status: string;
-  date_of_birth?: string | null;
-  id_number?: string | null;
+  date_of_birth: string | null;
+  id_number: string | null;
 }
 
 interface TeachersTableProps {
