@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, RefreshCw, Search } from "lucide-react";
@@ -8,6 +7,7 @@ import { TeachersTable } from "@/components/teachers/TeachersTable";
 import { CreateTeacherSheet } from "@/components/teachers/CreateTeacherSheet";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { teacherService } from "@/services/mockTeacherData";
 
 const Teachers = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -15,20 +15,14 @@ const Teachers = () => {
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
 
+  // Using mock service - Replace with actual API call to your MongoDB backend
   const { data: teachersData, isLoading, refetch } = useQuery({
-    queryKey: ["teachers", page, pageSize],
+    queryKey: ["teachers", page, pageSize, search],
     queryFn: async () => {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data, error, count } = await supabase
-        .from("teachers")
-        .select("*, work_positions(name)", { count: "exact" })
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-      return { data, count };
+      // This simulates fetching from MongoDB backend
+      // Replace this with: const response = await fetch('/api/teachers?page=...')
+      const result = await teacherService.getTeachers(page, pageSize, search || undefined);
+      return { data: result.data, count: result.total };
     },
   });
 

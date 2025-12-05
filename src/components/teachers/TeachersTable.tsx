@@ -19,24 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TeacherDetailSheet } from "./TeacherDetailSheet";
-
-interface Teacher {
-  id: string;
-  full_name: string;
-  email: string | null;
-  phone: string | null;
-  avatar_url: string | null;
-  academic_degree: string | null;
-  work_positions: { name: string } | null;
-  work_position_id: string | null;
-  address: string | null;
-  status: string;
-  date_of_birth: string | null;
-  id_number: string | null;
-}
+import { TeacherFromBackend, teacherService } from "@/services/mockTeacherData";
 
 interface TeachersTableProps {
-  teachers: Teacher[];
+  teachers: TeacherFromBackend[];
   isLoading: boolean;
   currentPage: number;
   totalPages: number;
@@ -56,7 +42,7 @@ export const TeachersTable = ({
   onPageChange,
   onPageSizeChange,
 }: TeachersTableProps) => {
-  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<TeacherFromBackend | null>(null);
 
   if (isLoading) {
     return (
@@ -76,6 +62,31 @@ export const TeachersTable = ({
     if (currentPage >= totalPages - 2) return totalPages - 4 + i;
     return currentPage - 2 + i;
   });
+
+  // Helper to get degree display
+  const getDegreeDisplay = (teacher: TeacherFromBackend) => {
+    if (!teacher.degrees.length) return { level: "Chưa có", major: "—" };
+    // Get highest degree (Doctorate > Master > Bachelor)
+    const priority = { Doctorate: 3, Master: 2, Bachelor: 1 };
+    const highest = teacher.degrees.reduce((prev, curr) => 
+      (priority[curr.type] || 0) > (priority[prev.type] || 0) ? curr : prev
+    );
+    const typeMap: Record<string, string> = {
+      Bachelor: "Cử nhân",
+      Master: "Thạc sĩ",
+      Doctorate: "Tiến sĩ"
+    };
+    return { 
+      level: typeMap[highest.type] || highest.type,
+      major: highest.major 
+    };
+  };
+
+  // Helper to get position names
+  const getPositionNames = (teacher: TeacherFromBackend) => {
+    const positions = teacherService.getTeacherPositions(teacher.positionIds);
+    return positions.map(p => p.name).join(", ") || "—";
+  };
 
   return (
     <>
@@ -102,73 +113,76 @@ export const TeachersTable = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                teachers.map((teacher) => (
-                  <TableRow key={teacher.id} className="hover:bg-muted/20">
-                    <TableCell className="font-mono text-sm text-muted-foreground">
-                      {teacher.id.substring(0, 10)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {teacher.avatar_url ? (
-                            <img
-                              src={teacher.avatar_url}
-                              alt={teacher.full_name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{teacher.full_name}</div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {teacher.email || "Chưa có email"}
+                teachers.map((teacher) => {
+                  const degree = getDegreeDisplay(teacher);
+                  return (
+                    <TableRow key={teacher.id} className="hover:bg-muted/20">
+                      <TableCell className="font-mono text-sm text-muted-foreground">
+                        {teacher.code}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {teacher.avatarUrl ? (
+                              <img
+                                src={teacher.avatarUrl}
+                                alt={teacher.fullName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-5 w-5 text-muted-foreground" />
+                            )}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {teacher.phone || ""}
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{teacher.fullName}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {teacher.email || "Chưa có email"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {teacher.phone || ""}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>Bậc: {teacher.academic_degree || "Chưa có"}</div>
-                        <div className="text-muted-foreground text-xs">
-                          Chuyên ngành: —
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>Bậc: {degree.level}</div>
+                          <div className="text-muted-foreground text-xs">
+                            Chuyên ngành: {degree.major}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">N/A</TableCell>
-                    <TableCell>{teacher.work_positions?.name || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {teacher.address || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="default"
-                        className={
-                          teacher.status === "active"
-                            ? "bg-success hover:bg-success text-success-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }
-                      >
-                        {teacher.status === "active" ? "Đang công tác" : "Ngừng"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-muted-foreground"
-                        onClick={() => setSelectedTeacher(teacher)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Chi tiết
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">N/A</TableCell>
+                      <TableCell>{getPositionNames(teacher)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {teacher.address || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="default"
+                          className={
+                            teacher.status === "active"
+                              ? "bg-success hover:bg-success text-success-foreground"
+                              : "bg-muted text-muted-foreground"
+                          }
+                        >
+                          {teacher.status === "active" ? "Đang công tác" : "Ngừng"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-muted-foreground"
+                          onClick={() => setSelectedTeacher(teacher)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Chi tiết
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
