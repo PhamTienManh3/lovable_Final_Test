@@ -7,6 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Mail, Phone, MapPin, Calendar, CreditCard, GraduationCap, Briefcase } from "lucide-react";
 
 interface Teacher {
@@ -69,7 +70,8 @@ export const TeacherDetailSheet = ({
           <SheetTitle>Thông tin giáo viên</SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <ScrollArea className="h-[calc(100vh-120px)] mt-6 pr-4">
+          <div className="space-y-6">
           {/* Avatar and basic info */}
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -185,6 +187,7 @@ export const TeacherDetailSheet = ({
             Mã giáo viên: {teacher.id.slice(0, 8)}
           </div>
         </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );
